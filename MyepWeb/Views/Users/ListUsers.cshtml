@@ -1,0 +1,29 @@
+﻿@model List<User>
+@{
+    ViewBag.Title = "List Users";
+}
+
+<div>
+    <a href="/users/edit" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> Add User</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-condensed table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Email</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td><a href="/users/edit/@m.Id">Edit @m.Id</a></td>
+                    <td>@m.Email</td>
+                    <td>@m.Active</td>
+                </tr>}
+        </tbody>
+    </table>
+</div>

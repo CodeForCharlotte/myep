@@ -1,0 +1,16 @@
+@model String
+@{
+    var type = (string)ViewData.ModelMetadata.AdditionalValues["CodeType"];
+    var attrs = (IDictionary<string, object>)ViewData["htmlAttributes"];
+    var selected = Model.Or().Split(',');
+    var list = Ioc
+        .Get<Codes>()
+        .Query(type, !Request.IsAuthenticated)
+        .Select(x => new SelectListItem {
+            Value = x.Value,
+            Text = x.Label.Or(x.Value),
+            Selected = selected.Contains(x.Value),
+        })
+        .ToList();
+}
+@Html.MultiSelect("", list, attrs)

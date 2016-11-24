@@ -1,0 +1,107 @@
+﻿@model Intern
+@{
+    ViewBag.Title = "MYEP Application";
+}
+@Html.ValidationSummary((string)ViewBag.ErrorMessage)
+@using (Html.BeginForm("App", "Home", null, FormMethod.Post, new { role = "form", @class = "form-horizontal", enctype = "multipart/form-data" }))
+{
+    @Html.Hidden("CmsStudentId")
+    @Editor(Html.Metadata(x => x.FirstName, "First Name"))
+    @Editor(Html.Metadata(x => x.MiddleInitial, "Middle Initial"))
+    @Editor(Html.Metadata(x => x.LastName, "Last Name"))
+    @Editor(Html.Metadata(x => x.Address1, "Address1"))
+    @Editor(Html.Metadata(x => x.City, "City"))
+    @Editor(Html.Metadata(x => x.State, "State"))
+    @Editor(Html.Metadata(x => x.Zip, "Zip"))
+    @Editor(Html.Metadata(x => x.Phone, "Phone"))
+    @Editor(Html.Metadata(x => x.PhoneIsCell, "Phone Is Cell"))
+    @Editor(Html.Metadata(x => x.Phone2, "Alternate Phone"))
+    @Editor(Html.Metadata(x => x.Email, "Email"))
+    @* ConfirmEmail *@
+    @Editor(Html.Metadata(x => x.BirthDate, "Birth Date"))
+    @Editor(Html.Metadata(x => x.SummerActivity, "Summer Activity Involvement:"), null, "Select all that apply:")
+    @Editor(Html.Metadata(x => x.HasSummerTravel, "Do you have Summer Travel?"))
+    @Editor(Html.Metadata(x => x.SummerTravelDates, "Dates of Travel"))
+    @Editor(Html.Metadata(x => x.HasSummerSchool, "Do you have Summer School?"))
+    @Editor(Html.Metadata(x => x.InternshipAvailability, "List dates available for summer internship"), null, "Provide format MM/DD/YYYY to MM/DD/YYYY")
+    @Editor(Html.Metadata(x => x.HasTransportation, "Do you have transportation?"))
+    @Editor(Html.Metadata(x => x.ResidenceOnBusLine, "Is your residence located on a bus line?"))
+    <div><b>Equal Opportunity Information</b><br />The City of Charlotte Mayor’s Youth Employment Program (MYEP) does not discriminate based on race, sex, color, creed, religion, national origin, age, sexual orientation, or disability. The information below is voluntary and will in no way affect you as an applicant. Its purpose is to see how well our recruitment efforts are reaching all segment of the population.</div>
+    @Editor(Html.Metadata(x => x.Race, "Race"), null, "Please select all that apply below:")
+    @Editor(Html.Metadata(x => x.RaceOther, " "))
+    @Editor(Html.Metadata(x => x.Gender, "Gender"), null, "Please select all that apply below:")
+    @Editor(Html.Metadata(x => x.ReferredBy, "Who referred you to the program?"), null, "Select all that apply:")
+    @Editor(Html.Metadata(x => x.HighSchool, "Current High School"))
+    @Editor(Html.Metadata(x => x.Grade, "Grade"))
+    @Editor(Html.Metadata(x => x.GraduationMonth, "Graduation Month"))
+    @Editor(Html.Metadata(x => x.GraduationYear, "Graduation Year"))
+    @Editor(Html.Metadata(x => x.ApplyingToCollege, "Are you planning to apply to a college or university for the upcoming fall?"))
+    @Editor(Html.Metadata(x => x.PlansAfterGraduation, "If no, what are your plans after graduation?"))
+    @Editor(Html.Metadata(x => x.CurrentlyWorking, "Are you currently working?"))
+    @Editor(Html.Metadata(x => x.ClubsActivities, "What other clubs and/or activities are you involved in?"))
+    @Editor(Html.Metadata(x => x.ParentName, "Parent/Legal Guardian Name(s)"))
+    @Editor(Html.Metadata(x => x.ParentRelationship, "Relationship"))
+    @Editor(Html.Metadata(x => x.ParentAddress1, "Parent/Guardian Address1"))
+    @Editor(Html.Metadata(x => x.ParentCity, "Parent/Guardian City"))
+    @Editor(Html.Metadata(x => x.ParentState, "Parent/Guardian State"))
+    @Editor(Html.Metadata(x => x.ParentZip, "Parent/Guardian Zip"))
+    @Editor(Html.Metadata(x => x.ParentPhone, "Parent/Guardian Phone"))
+    @Editor(Html.Metadata(x => x.ParentPhoneType, "Parent/Guardian Phone Number Type"))
+    @Editor(Html.Metadata(x => x.ParentPhone2, "Parent/Guardian Alternate Phone"))
+    @Editor(Html.Metadata(x => x.ParentEmail, "Parent/Guardian Email"))
+    @* confirm parent email *@
+    @Editor(Html.Metadata(x => x.StrengthsTalents, "Briefly describe yourself"), null, "What are you strengths, talents, work styles, etc.?")
+    @Editor(Html.Metadata(x => x.BriefEssay, "Briefly state why you want to participate in the Mayor's Youth Employment Program"))
+    @Editor(Html.Metadata(x => x.CareerInterests, "Please list your career interests"))
+    @Upload("Essay", "Essay", "Essays must be typed, one-page, 12-point font (Times New Roman preferred), with one-inch margins.  The top of the page should include the applicant's name and the title: <b>MYEP Essay- Why I want to Participate in the Mayor's Youth Employment Program</b>")
+    @Upload("Resume", "Resume", "Upload a copy of your resume.")
+    @Upload("Recommendation1", "Recommendation 1", "Upload your first recommendation letter.")
+    @Upload("Recommendation2", "Recommendation 2", "Upload your second recommendation letter.")
+    @Editor(Html.Metadata(x => x.ShirtSize, "Shirt Size"))
+    @Editor(Html.Metadata(x => x.PhotoConsentAcknowledgement, "Photo Consent Acknowledge"), null, "<a href='/Content/docs/PhotoConsentAcknowledgement.pdf' target='_blank'>Download PDF</a>")
+    @Editor(Html.Metadata(x => x.StatementOfUnderstanding, "Statement of Understanding Reading the MYEP Student Handbook"), null, "<a href='/Content/docs/StatementOfUnderstanding.pdf' target='_blank'>Download PDF</a>")
+
+    <div class="form-group">
+        <div class="col-lg-offset-2 col-lg-10">
+            <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-floppy-disk"></span> Submit Application</button>
+        </div>
+    </div>
+}
+
+<script type="text/javascript">
+    $("form").submit(function () {
+        if (!$(this).valid()) {
+            alert("Please correct the issues with your application.");
+            return false;
+        }
+        return confirm("Make sure your application is complete, you will not be able to make changes after submission.");
+    });
+</script>
+
+@helper Editor(ModelMetadata metadata, object attrs = null, string help = null)
+{
+    <div class="form-group">
+        <label for="@metadata.PropertyName" class="col-lg-2 control-label">
+            @metadata.DisplayName
+        </label>
+        <div class="col-lg-10">
+            @if (help != null)
+            {
+                <div>@Html.Raw(help)</div>
+            }
+            @Html.Editor(metadata, new RouteValueDictionary(attrs).Set("class", "form-control"))
+            @Html.ValidationMessage(metadata.PropertyName)
+        </div>
+    </div>
+}
+
+@helper Upload(string name, string label, string help)
+{
+    <div class="form-group">
+        <label for="@name" class="col-lg-2 control-label">@label</label>
+        <div class="col-lg-10">
+            <p>@Html.Raw(help)</p>
+            <input type="file" name="@name" />
+        </div>
+    </div>
+}

@@ -1,0 +1,119 @@
+﻿@model Intern
+@{
+    ViewBag.Title = "Edit Intern";
+}
+@Html.ValidationSummary((string)ViewBag.ErrorMessage)
+<form method="post" role="form" class="form-horizontal">
+    @Editor(Html.Metadata(x => x.Id, "Id"))
+    @Editor(Html.Metadata(x => x.AccessCode, "Access Code"))
+    @Editor(Html.Metadata(x => x.CmsStudentId, "CMS Student Id"))
+    @Editor(Html.Metadata(x => x.FirstName, "First Name"))
+    @Editor(Html.Metadata(x => x.MiddleInitial, "Middle Initial"))
+    @Editor(Html.Metadata(x => x.LastName, "Last Name"))
+    @Editor(Html.Metadata(x => x.Address1, "Address1"))
+    @Editor(Html.Metadata(x => x.City, "City"))
+    @Editor(Html.Metadata(x => x.State, "State"))
+    @Editor(Html.Metadata(x => x.Zip, "Zip"))
+    @Editor(Html.Metadata(x => x.Phone, "Phone"))
+    @Editor(Html.Metadata(x => x.PhoneIsCell, "Phone Is Cell"))
+    @Editor(Html.Metadata(x => x.Phone2, "Alternate Phone"))
+    @Editor(Html.Metadata(x => x.Email, "Email"))
+    @* ConfirmEmail *@
+    @Editor(Html.Metadata(x => x.BirthDate, "Birth Date"))
+    @Editor(Html.Metadata(x => x.SummerActivity, "Summer Activity Involvement:"), null, "Select all that apply:")
+    @Editor(Html.Metadata(x => x.HasSummerTravel, "Do you have Summer Travel?"))
+    @Editor(Html.Metadata(x => x.SummerTravelDates, "Dates of Travel"))
+    @Editor(Html.Metadata(x => x.HasSummerSchool, "Do you have Summer School?"))
+    @Editor(Html.Metadata(x => x.InternshipAvailability, "List dates available for summer internship"), null, "Provide format MM/DD/YYYY to MM/DD/YYYY")
+    @Editor(Html.Metadata(x => x.ConvictedOfCrime, "Have you ever been convicted of a crime?"))
+    @Editor(Html.Metadata(x => x.CrimeDescription, "If Yes, Please provide the date and a brief description of the incident"))
+    @Editor(Html.Metadata(x => x.HasTransportation, "Do you have transportation?"))
+    @Editor(Html.Metadata(x => x.ResidenceOnBusLine, "Is your residence located on a bus line?"))
+    @Editor(Html.Metadata(x => x.Race, "Race"), null, "The City of Charlotte Mayor's Youth Employment Program (MYEP) does not discriminate based on race, sex, color, creed, religion, national origin, age, sexual orientation, or disability. The information requested below is voluntary and will in no way affect you as an applicant. Its purpose is to see how well our recruitment efforts are reaching all segments of the population.<br/>Please select all that apply below:")
+    @Editor(Html.Metadata(x => x.RaceOther, " "))
+    @Editor(Html.Metadata(x => x.Gender, "Gender"), null, "Please select all that apply below:")
+    @Editor(Html.Metadata(x => x.ReferredBy, "Who referred you to the program?"), null, "Select all that apply:")
+    @Editor(Html.Metadata(x => x.HighSchool, "Current High School"))
+    @Editor(Html.Metadata(x => x.Grade, "Grade"))
+    @Editor(Html.Metadata(x => x.GraduationMonth, "Graduation Month"))
+    @Editor(Html.Metadata(x => x.GraduationYear, "Graduation Year"))
+    @Editor(Html.Metadata(x => x.ApplyingToCollege, "Are you planning to apply to a college or university for the upcoming fall?"))
+    @Editor(Html.Metadata(x => x.PlansAfterGraduation, "If no, what are your plans after graduation?"))
+    @Editor(Html.Metadata(x => x.CurrentlyWorking, "Are you currently working?"))
+    @Editor(Html.Metadata(x => x.ClubsActivities, "What other clubs and/or activities are you involved in?"))
+    @Editor(Html.Metadata(x => x.ParentName, "Parent/Legal Guardian Name(s)"))
+    @Editor(Html.Metadata(x => x.ParentRelationship, "Relationship"))
+    @Editor(Html.Metadata(x => x.ParentAddress1, "Parent/Guardian Address1"))
+    @Editor(Html.Metadata(x => x.ParentCity, "Parent/Guardian City"))
+    @Editor(Html.Metadata(x => x.ParentState, "Parent/Guardian State"))
+    @Editor(Html.Metadata(x => x.ParentZip, "Parent/Guardian Zip"))
+    @Editor(Html.Metadata(x => x.ParentPhone, "Parent/Guardian Phone"))
+    @Editor(Html.Metadata(x => x.ParentPhoneType, "Parent/Guardian Phone Number Type"))
+    @Editor(Html.Metadata(x => x.ParentPhone2, "Parent/Guardian Alternate Phone"))
+    @Editor(Html.Metadata(x => x.ParentEmail, "Parent/Guardian Email"))
+    @* confirm parent email *@
+    @Editor(Html.Metadata(x => x.StrengthsTalents, "Briefly describe yourself"), null, "What are you strengths, talents, work styles, etc.?")
+    @Editor(Html.Metadata(x => x.BriefEssay, "Briefly state why you want to participate in the Mayor's Youth Employment Program"))
+    @Editor(Html.Metadata(x => x.CareerInterests, "Please list your career interests"))
+    @Download(Html.Metadata(x => x.EssayFileName, "Essay"))
+    @Download(Html.Metadata(x => x.ResumeFileName, "Resume"))
+    @Download(Html.Metadata(x => x.RecommendationFileName1, "Recommendation 1"))
+    @Download(Html.Metadata(x => x.RecommendationFileName2, "Recommendation 2"))
+    @Editor(Html.Metadata(x => x.ShirtSize, "Shirt Size"))
+    @Editor(Html.Metadata(x => x.BackgroundCheck, "Background Check"))
+    @Editor(Html.Metadata(x => x.BackgroundCheckConcerns, "Background Check Concerns"))
+    @Editor(Html.Metadata(x => x.DrugScreen, "Drug Screen"))
+    @Editor(Html.Metadata(x => x.CDCLastName, "CDC Last Name"))
+    @Editor(Html.Metadata(x => x.CDDAttendDate, "CDD Attended"))
+    @Editor(Html.Metadata(x => x.TrainingCompleted, "Training Completed"))
+    @Editor(Html.Metadata(x => x.CareerInterest, "Career Interest"))
+    @Editor(Html.Metadata(x => x.Placement, "Placement"))
+    @Editor(Html.Metadata(x => x.MonitoringVisitsComments, "Monitoring Visits Comments"))
+    @Editor(Html.Metadata(x => x.HomeDistrict, "Charlotte City Council District of Intern's Home"))
+    @Editor(Html.Metadata(x => x.HostSiteDistrict, "Charlotte City Council District of Host Site"))
+    @Editor(Html.Metadata(x => x.HomeServiceArea, "Service Area of Intern's Home"))
+    @Editor(Html.Metadata(x => x.HostSiteServiceArea, "Service Area of Intern's Home"))
+    @Editor(Html.Metadata(x => x.PhotoConsentAcknowledgement, "Photo Consent Acknowledge"))
+    @Editor(Html.Metadata(x => x.StatementOfUnderstanding, "Statement of Understanding Reading the MYEP Student Handbook"))
+    @Editor(Html.Metadata(x => x.Comments, "Comments"))
+    @Editor(Html.Metadata(x => x.Inactive, "Inactive"))
+
+    <div class="form-group">
+        <div class="col-lg-offset-2 col-lg-10">
+            <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-floppy-disk"></span> Save Intern</button>
+            <a href="/interns" class="btn btn-default"><span class="glyphicon glyphicon-list"></span> Cancel</a>
+        </div>
+    </div>
+</form>
+@helper Editor(ModelMetadata metadata, object attrs = null, string help = null)
+{
+    <div class="form-group">
+        <label for="@metadata.PropertyName" class="col-lg-2 control-label">
+            @metadata.DisplayName
+        </label>
+        <div class="col-lg-10">
+            @if (help != null)
+            {
+                <div>@Html.Raw(help)</div>
+            }
+            @Html.Editor(metadata, new RouteValueDictionary(attrs).Set("class", "form-control"))
+        </div>
+    </div>
+}
+@helper Download(ModelMetadata metadata)
+{
+var filename = metadata.Model.Or();
+    <div class="form-group">
+        <label for="@metadata.PropertyName" class="col-lg-2 control-label">@metadata.DisplayName</label>
+        <div class="col-lg-10">
+            @if (filename.HasValue())
+            {
+                <a href="@Url.Action("download", new{Model.Id, name=filename})">Download @filename</a>
+            }
+            else
+            {
+                <span>No File Uploaded</span>
+            }
+        </div>
+    </div>
+}

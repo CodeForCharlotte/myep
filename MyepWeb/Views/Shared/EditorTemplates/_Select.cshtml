@@ -1,0 +1,18 @@
+@model Object
+@{
+    var value = Model.Or();
+    var type = (string)ViewData.ModelMetadata.AdditionalValues["CodeType"];
+    var attrs = (IDictionary<string, object>)ViewData["htmlAttributes"];
+    var list = Ioc
+        .Get<Codes>()
+        .Query(type)
+        .Select(x => new SelectListItem
+        {
+            Value = x.Value,
+            Text = x.Label.Or(x.Value),
+            Selected = x.Value == value,
+        })
+        .ToList();
+    list.Insert(0, new SelectListItem());
+}
+@Html.DropDownList("", list, attrs)

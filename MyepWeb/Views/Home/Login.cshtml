@@ -1,0 +1,20 @@
+﻿@model User
+@{
+    ViewBag.Title = "Login";
+}
+
+@Html.ValidationSummary((string)ViewBag.ErrorMessage)
+
+<form method="post" role="form" class="form-horizontal">
+    @Editor(Html.Metadata(x => x.Email, "Email"))
+    @Editor(Html.Metadata(x => x.Password, "Password"))
+    <input type="submit" value="Login" class="btn btn-primary" />
+</form>
+
+@helper Editor(ModelMetadata metadata, object attrs = null)
+{
+    <div class="form-group">
+        <label for="@metadata.PropertyName" class="col-lg-2 control-label">@metadata.DisplayName</label>
+        <div class="col-lg-10">@Html.Editor(metadata, new RouteValueDictionary(attrs).Set("class", "form-control"))</div>
+    </div>
+}

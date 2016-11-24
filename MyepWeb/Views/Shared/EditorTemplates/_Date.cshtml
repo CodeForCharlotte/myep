@@ -1,0 +1,6 @@
+@model DateTime?
+@{
+    var attrs = (IDictionary<string, object>)ViewData["htmlAttributes"];
+    attrs.AddClass("datePicker");
+}
+@Html.TextBox("", Model.ToString("MM/dd/yyyy"), attrs)

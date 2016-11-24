@@ -1,0 +1,30 @@
+﻿@model User
+@{
+    ViewBag.Title = "Edit User";
+}
+
+<div class="Error">@ViewBag.ErrorMessage</div>
+
+<form method="post" role="form" class="form-horizontal">
+    @Editor(Html.Metadata(x => x.Id, "Id"))
+    @Editor(Html.Metadata(x => x.Email, "Email"))
+    @Editor(Html.Metadata(x => x.Active, "Active"))
+
+    <div class="form-group">
+        <div class="col-lg-offset-2 col-lg-10">
+            <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-floppy-disk"></span> Save User</button>
+            <a href="/users" class="btn btn-default"><span class="glyphicon glyphicon-list"></span> Cancel</a>
+            @if (Model.Id > 0)
+            {
+                <button type="submit" class="btn btn-default" name="_submit" value="EmailLogin"><span class="glyphicon glyphicon-envelope"></span> Email User Password Reset</button>}
+        </div>
+    </div>
+</form>
+
+@helper Editor(ModelMetadata metadata, object attrs = null)
+{
+    <div class="form-group">
+        <label for="@metadata.PropertyName" class="col-lg-2 control-label">@metadata.DisplayName</label>
+        <div class="col-lg-10">@Html.Editor(metadata, new RouteValueDictionary(attrs).Set("class", "form-control"))</div>
+    </div>
+}

@@ -1,0 +1,38 @@
+﻿@model List<InternInfo>
+@{
+    ViewBag.Title = "List Interns";
+}
+<form method="GET">
+    <a href="/interns/edit" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> Add Intern</a>
+    <a href="@Url.Action("Export")" class="btn btn-default"><span class="glyphicon glyphicon-download"></span> Export List</a>
+    <label>@Html.CheckBox("Inactive", (bool)ViewBag.Inactive) Inactive</label>
+    <button type="submit" class="btn btn-default">Filter</button>
+</form>
+<div class="table-responsive">
+    <table class="table table-condensed table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Employer</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td>
+                        <a href="/interns/edit/@m.InternId">Edit @m.InternId</a>
+                        | <a href="/interns/ViewInternDoc/@m.InternId">Print</a>
+                    </td>
+                    <td>@m.FullName</td>
+                    <td>@m.Organization</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<form method="post" role="form" action="@Url.Action("Import")" enctype="multipart/form-data">
+    Import School file: <input type="file" name="SchoolFile" />
+    <input type="submit" value="Upload" />
+</form>

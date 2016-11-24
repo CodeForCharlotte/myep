@@ -1,0 +1,7 @@
+@model string
+@{
+    var attrs = (IDictionary<string, object>)ViewData["htmlAttributes"] ?? new RouteValueDictionary();
+    attrs["rows"] = 4;
+    attrs["cols"] = 50;
+}
+@Html.TextArea("", Model, attrs)

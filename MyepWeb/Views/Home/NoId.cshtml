@@ -1,0 +1,20 @@
+﻿@model dynamic
+@{
+    ViewBag.Title = "Enter ID";
+}
+
+<form method="get" role="form" class="form-horizontal">
+    <div class="form-group">
+        <label for="CmsStudentId" class="col-lg-2 control-label">
+            CMS Student ID
+        </label>
+        <div class="col-lg-10">
+            @Html.TextBox("id", (string)ViewBag.CmsStudentId, new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-lg-offset-2 col-lg-10">
+            <button type="submit" class="btn btn-primary">Begin Application</button>
+        </div>
+    </div>
+</form>
