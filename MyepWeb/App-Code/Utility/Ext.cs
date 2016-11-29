@@ -77,6 +77,75 @@ namespace Site
             return "";
         }
 
+        public static List<T> Each<T>(this IEnumerable<T> items, Action<T> action)
+        {
+            if (items == null)
+                return new List<T>();
+
+            var list = items.ToList();
+            list.ForEach(action);
+
+            return list;
+        }
+
+        public static KeyValuePair<K, V> KeyValuePair<K, V>(K key, V value)
+        {
+            return new KeyValuePair<K, V>(key, value);
+        }
+
+        public static Dictionary<K, V> ToDict<K, V>(this IEnumerable<V> items, Func<V, K> keySelector, string dupMsg = "Duplicate key '{0}'")
+        {
+            var dict = new Dictionary<K, V>();
+            foreach (var item in items)
+            {
+                var key = keySelector(item);
+                try
+                {
+                    dict.Add(key, item);
+                }
+                catch (ArgumentException)
+                {
+                    throw new ApplicationException(string.Format(dupMsg, key));
+                }
+            }
+            return dict;
+        }
+
+        public static Dictionary<K, I> ToDict<K, V, I>(this IEnumerable<V> items, Func<V, K> keySelector, Func<V, I> itemSelector, string dupMsg = "Duplicate key '{0}'")
+        {
+            var dict = new Dictionary<K, I>();
+            foreach (var item in items)
+            {
+                var key = keySelector(item);
+                try
+                {
+                    dict.Add(key, itemSelector(item));
+                }
+                catch (ArgumentException)
+                {
+                    throw new ApplicationException(string.Format(dupMsg, key));
+                }
+            }
+            return dict;
+        }
+
+        public static V Get<K, V>(this IDictionary<K, V> dict, K key, V def = default(V), bool add = false)
+        {
+            if (dict == null || key == null)
+            {
+                return def;
+            }
+            else if (dict.ContainsKey(key))
+            {
+                return dict[key];
+            }
+            else
+            {
+                if (add) dict[key] = def;
+                return def;
+            }
+        }
+
         public static IDictionary<TKey, TValue> Set<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
         {
             dict[key] = value;
@@ -137,7 +206,7 @@ namespace Site
             }
         }
 
-        public static int[] upto(this int start, int end, int step = 1)
+        public static int[] UpTo(this int start, int end, int step = 1)
         {
             var list = new List<int>();
             for (var i = start; i <= end; i += step)
@@ -146,7 +215,7 @@ namespace Site
             }
             return list.ToArray();
         }
-        public static int[] downto(this int start, int end)
+        public static int[] DownTo(this int start, int end)
         {
             var list = new List<int>();
             for (var i = start; i >= end; i -= 1)
@@ -167,6 +236,32 @@ namespace Site
         public static bool CanConvertFrom(this Type to, Type from)
         {
             return TypeDescriptor.GetConverter(to).CanConvertFrom(from);
+        }
+
+        public static bool IsSimpleType(this Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+
+            if (type.IsGenericType)
+            {
+                type = Nullable.GetUnderlyingType(type);
+                if (type == null) return false;
+            }
+
+            if (type.IsPrimitive)
+                return true;
+
+            if (type == typeof(string))
+                return true;
+
+            if (type == typeof(DateTime))
+                return true;
+
+            if (type == typeof(decimal))
+                return true;
+
+            return false;
         }
 
         public static T Get<T>(this Object obj, PropertyInfo prop)

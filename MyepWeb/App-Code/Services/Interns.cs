@@ -137,7 +137,7 @@ namespace Site
             {
                 //Find columns that map to properties
                 var props = new List<PropertyInfo>();
-                foreach (var col in 1.upto(excel.Columns))
+                foreach (var col in 1.UpTo(excel.Cols))
                 {
                     var prop = typeof(Intern).GetProperty(excel[1, col].Or());
                     if (prop != null && prop.Name == "Id")
@@ -146,7 +146,7 @@ namespace Site
                         props.Add(prop);
                 }
 
-                var list = excel.ToList<Intern>();
+                var list = excel.GetList<Intern>();
                 foreach (var item in list)
                 {
                     if (!item.CmsStudentId.HasValue()) continue; //need id to import
@@ -156,7 +156,7 @@ namespace Site
                     intern = Create(null);
 
                     //only update properties from file
-                    foreach (var c in 0.upto(props.Count - 1))
+                    foreach (var c in 0.UpTo(props.Count - 1))
                     {
                         if (props[c] != null) intern.Set(props[c], item.Get(props[c]));
                     }
@@ -172,10 +172,9 @@ namespace Site
         public Stream Export()
         {
             var interns = _db.Query<Intern>("SELECT * FROM Interns");
-            using (var excel = new Excel())
+            using (var excel = Excel.Create(interns))
             {
-                excel.AddList(interns);
-                return excel.AsStream();
+                return excel.GetStream();
             }
         }
     };

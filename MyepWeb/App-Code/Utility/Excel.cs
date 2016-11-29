@@ -1,429 +1,387 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using Syncfusion.XlsIO;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 
 namespace Site
 {
-
     public class Excel : IDisposable
     {
-
-        private readonly ExcelEngine _excel;
-        private readonly IWorkbook _workbook;
-        private readonly IWorksheet _sheet;
-        private int _row, _col;
+        private ExcelPackage _excel;
+        private ExcelWorksheet _worksheet;
 
         public Excel()
         {
-            _excel = new ExcelEngine();
-            _workbook = _excel.Excel.Workbooks.Create(1);
-            _workbook.Version = ExcelVersion.Excel97to2003;
-            _sheet = _workbook.Worksheets[0];
-            _row = 1;
-            _col = 1;
+            _excel = new ExcelPackage();
+            _worksheet = _excel.Workbook.Worksheets.Add("Sheet1");
+            Row = 0;
+            NextRow();
         }
 
-        public Excel(string path, ExcelVersion? version = null)
+        public Excel(Stream stream)
         {
-            _excel = new ExcelEngine();
-            _workbook = version == null
-                        ? _excel.Excel.Workbooks.Open(path)
-                        : _excel.Excel.Workbooks.Open(path, version.Value);
-            _sheet = _workbook.Worksheets[0];
-            _row = 1;
-            _col = 1;
+            _excel = new ExcelPackage();
+            _excel.Load(stream);
+            _worksheet = _excel.Workbook.Worksheets[1];
+            Row = 0;
+            NextRow();
         }
 
-        public Excel(Stream donorfile, ExcelVersion? version = null)
+        public int Row { get; set; }
+        public int Col { get; set; }
+        public int Rows => _worksheet.Dimension.End.Row;
+        public int Cols => _worksheet.Dimension.End.Column;
+
+        public object this[int row, int col]
         {
-            _excel = new ExcelEngine();
-            _workbook = version == null
-                        ? _excel.Excel.Workbooks.Open(donorfile)
-                        : _excel.Excel.Workbooks.Open(donorfile, version.Value);
-            _sheet = _workbook.Worksheets[0];
-            _row = 1;
-            _col = 1;
+            get { return _worksheet.Cells[row, col].Value; }
+            set { _worksheet.Cells[row, col].Value = value; }
         }
 
-        public IWorkbook Workbook
+        public T Get<T>(int row, int col, T def = default(T))
         {
-            get { return _workbook; }
+            return (T)Get(typeof(T), row, col, def);
         }
 
-        public object this[int r, int c]
+        public object Get(Type type, int row, int col, object def = null)
         {
-            get { return Get(r, c); }
-            set { Set(r, c, value); }
-        }
-
-        public object Get(int row, int col)
-        {
-            return _sheet[row, col].Value2;
-        }
-
-        public void Set(int row, int col, object value)
-        {
-            if (value is string)
+            if (type == typeof(DateTime))
             {
-                _sheet[row, col].Text = (string)value;
+                return _worksheet.Cells[row, col].GetValue<DateTime>();
             }
-            else
+            else if (type == typeof(DateTime?))
             {
-                _sheet[row, col].Value2 = value;
+                var date = _worksheet.Cells[row, col].GetValue<DateTime>();
+                return date.HasValue() ? date : def;
             }
+            return this[row, col].To(type, def);
         }
 
-        public int Row
+        public List<string> GetWorksheets()
         {
-            get { return _row; }
-            set { _row = value; }
+            return _excel
+                .Workbook
+                .Worksheets
+                .Select(x => x.Name)
+                .ToList();
         }
 
-        public int Col
+        public bool NextSheet(string name, bool create = true)
         {
-            get { return _col; }
-            set { _col = value; }
+            if (_worksheet != null && _worksheet.Name == "Sheet1")
+            {
+                _worksheet.Name = name;
+                return true;
+            }
+
+            _worksheet = _excel.Workbook.Worksheets[name];
+            if (_worksheet == null)
+            {
+                if (create)
+                {
+                    _worksheet = _excel.Workbook.Worksheets.Add(name);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            Row = 0;
+            NextRow();
+            return true;
         }
 
-        public int Rows
-        {
-            get { return _sheet.Rows.Length; }
-        }
-
-        public int Columns
-        {
-            get { return _sheet.Columns.Length; }
-        }
-
-        public void NextRow()
-        {
-            Row++;
-            Col = 1;
-        }
-
-        public void Formula(int row, int col, string formula)
-        {
-            _sheet[row, col].Formula = formula;
-        }
-
-        public void AddRow(params object[] values)
-        {
-            _row = _row == 1 ? _sheet.Rows.Length + 1 : _row + 1;
-            _col = 1;
-            AddToRow(values);
-        }
-
-        public void AddToRow(params object[] values)
+        public void NextCol(params object[] values)
         {
             foreach (var value in values)
             {
-                Set(_row, _col++, value);
+                Set(Row, Col++, value);
             }
         }
 
-        public void AddList<T>(IEnumerable<T> list)
+        public void NextCol(Style style, params object[] values)
         {
-            if (list == null) return;
-            var props = list.GetType().GetGenericArguments()[0].GetProperties().Where(x => x.CanConvertFrom<string>());
-            foreach (var prop in props)
+            foreach (var value in values)
             {
-                AddToRow(prop.Name);
+                Set(Row, Col++, value, style);
             }
-            AddRow();
-            foreach (var obj in list)
+        }
+
+        public void NextRow(params object[] values)
+        {
+            Row++;
+            Col = 1;
+            NextCol(values);
+        }
+
+        public void NextRow(Style style, params object[] values)
+        {
+            Row++;
+            Col = 1;
+            NextCol(style, values);
+        }
+
+        public void NextSumRow(int fromCol, int toCol, Style style = null)
+        {
+            Sum(Row, Col++, Row, fromCol, Row, toCol);
+            Format(style);
+        }
+
+        public void NextSumCol(int fromRow, int toRow, Style style = null)
+        {
+            Sum(Row, Col++, fromRow, Col - 1, toRow, Col - 1);
+            Format(style);
+        }
+
+        public void NextFormula(string formula, Style style = null)
+        {
+            _worksheet.Cells[Row, Col++].Formula = formula;
+            Format(style);
+        }
+
+        public void Set(int row, int col, object value, Style style = null)
+        {
+            _worksheet.Cells[row, col].Value = value;
+            Format(style);
+        }
+
+        public void FormatAll(Style style)
+        {
+            Format(_worksheet.Cells, style);
+        }
+
+        public void Format(Style style, int? row = null, int? col = null)
+        {
+            if (row == null) row = Row;
+            if (col == null) col = Col - 1;
+            Format(_worksheet.Cells[row.Value, col.Value], style);
+        }
+
+        public void FormatRow(Style style, int fromCol, int toCol)
+        {
+            Format(_worksheet.Cells[Row, fromCol, Row, toCol], style);
+        }
+
+        public void FormatRow(Style style, int? toCol = null)
+        {
+            if (toCol == null) toCol = Col - 1;
+            Format(_worksheet.Cells[Row, 1, Row, toCol.Value], style);
+        }
+
+        public void FormatCol(Style style, int col, int? fromRow = 1, int? toRow = null)
+        {
+            if (fromRow == null) fromRow = 1;
+            if (toRow == null) toRow = Row;
+            Format(_worksheet.Cells[fromRow.Value, col, toRow.Value, col], style);
+        }
+
+        public void FormatCols(Style style, int col, int toCol, int? fromRow = 1, int? toRow = null)
+        {
+            if (fromRow == null) fromRow = 1;
+            if (toRow == null) toRow = Row;
+            Format(_worksheet.Cells[fromRow.Value, col, toRow.Value, toCol], style);
+        }
+
+        private void Format(ExcelRange cells, Style style)
+        {
+            if (cells == null || style == null) return;
+            if (style.Format != null) cells.Style.Numberformat.Format = style.Format;
+            if (style.Bold != null) cells.Style.Font.Bold = style.Bold.Value;
+            if (style.Color != null) cells.Style.Font.Color.SetColor(style.Color.Value);
+            if (style.BgColor != null)
             {
-                foreach (var prop in props)
+                cells.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                cells.Style.Fill.BackgroundColor.SetColor(style.BgColor.Value);
+            }
+            if (style.Merge.HasValue) cells.Merge = style.Merge.Value;
+            if (style.FontSize.HasValue) cells.Style.Font.Size = style.FontSize.Value;
+            if (style.Indent.HasValue) cells.Style.Indent = style.Indent.Value;
+            if (style.Wrap.HasValue) cells.Style.WrapText = style.Wrap.Value;
+            if (style.HAlign.HasValue)
+            {
+                if (style.HAlign.Value == HAlign.Left) cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+                if (style.HAlign.Value == HAlign.Center) cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                if (style.HAlign.Value == HAlign.Right) cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            }
+            if (style.Top == true) cells.Style.VerticalAlignment = ExcelVerticalAlignment.Top;
+            if (style.Width.HasValue) cells.Start.Column.UpTo(cells.End.Column).Each(x => _worksheet.Column(x).Width = style.Width.Value);
+        }
+
+        public string Address(int col)
+        {
+            return _worksheet.Cells[Row, col].Address;
+        }
+
+        public string Address(int row, int col)
+        {
+            return _worksheet.Cells[row, col].Address;
+        }
+
+        public void Sum(int row, int col, int fromRow, int fromCol, int toRow, int toCol)
+        {
+            if (toRow >= fromRow && toCol >= fromCol)
+            {
+                _worksheet.Cells[row, col].Formula = "SUM(" + _worksheet.Cells[fromRow, fromCol, toRow, toCol].Address + ")";
+            }
+        }
+
+        public void AutoFitColumns()
+        {
+            _worksheet.Cells.AutoFitColumns();
+        }
+
+        public void AutoFitColumns(double? minWidth = null, double? maxWidth = null, params int[] cols)
+        {
+            foreach (var col in cols)
+            {
+                if (minWidth == null)
                 {
-                    AddToRow(prop.GetValue(obj, null));
+                    _worksheet.Column(col).AutoFit();
                 }
-                AddRow();
-            }
-        }
-
-        public IRange Column(int i)
-        {
-            if (_sheet.Columns.Length < i) return null;
-            return _sheet.Columns[i - 1];
-        }
-
-        public IRange GetRow(int i)
-        {
-            if (_sheet.Rows.Length < i) return null;
-            return _sheet.Rows[i - 1];
-        }
-
-        public IRange GetCell(int row, int col)
-        {
-            return _sheet[row, col];
-        }
-
-        public IRange GetCells(int row, int col, int lastRow, int lastCol)
-        {
-            return _sheet[row, col, lastRow, lastCol];
-        }
-
-        public void AutofitColumns(params int[] cols)
-        {
-            if (cols.Length == 0)
-            {
-                //all
-                foreach (var c in 1.upto(_sheet.Columns.Length))
+                else if (maxWidth == null)
                 {
-                    _sheet.AutofitColumn(c);
+                    _worksheet.Column(col).AutoFit(minWidth.Value);
                 }
-            }
-            else
-            {
-                foreach (var c in cols)
+                else
                 {
-                    _sheet.AutofitColumn(c);
+                    _worksheet.Column(col).AutoFit(minWidth.Value, maxWidth.Value);
                 }
             }
         }
 
-        public void SetWidth(int c, int width)
+        public Stream GetStream()
         {
-            var column = Column(c);
-            if (column == null) return;
-            column.ColumnWidth = width;
-            column.CellStyle.WrapText = true;
+            var memoryStream = new MemoryStream();
+            _excel.SaveAs(memoryStream);
+            memoryStream.Position = 0;
+            return memoryStream;
         }
 
-        public void AutofitRows(params int[] rows)
+        public void Save(string path)
         {
-            if (rows.Length == 0)
-            {
-                foreach (var r in 1.upto(_sheet.Rows.Length))
-                {
-                    _sheet.Rows[r - 1].VerticalAlignment = ExcelVAlign.VAlignTop;
-                    _sheet.AutofitRow(r);
-                }
-            }
-            else
-            {
-                foreach (var r in rows)
-                {
-                    _sheet.Rows[r - 1].VerticalAlignment = ExcelVAlign.VAlignTop;
-                    _sheet.AutofitRow(r);
-                }
-            }
-        }
-
-        public Stream GetStream(ExcelVersion? version = null)
-        {
-            if (version.HasValue)
-            {
-                _workbook.Version = version.Value;
-            }
-
-            try
-            {
-                var stream = new MemoryStream();
-                _workbook.SaveAs(stream);
-                return stream;
-            }
-            finally
-            {
-                Dispose();
-            }
-        }
-
-        public void Save(string path, ExcelVersion? version = null)
-        {
-            if (version.HasValue) _workbook.Version = version.Value;
-            _workbook.SaveAs(path, ExcelSaveType.SaveAsXLS);
+            _excel.SaveAs(new FileInfo(path));
         }
 
         public void Dispose()
         {
-            if (_workbook != null) _workbook.Close();
-            if (_excel != null) _excel.Dispose();
+            if (_excel != null)
+            {
+                _excel.Dispose();
+                _excel = null;
+            }
+
+            if (_worksheet != null)
+            {
+                _worksheet.Dispose();
+                _worksheet = null;
+            }
         }
+
+        public class Style
+        {
+            public Color? Color { get; set; }
+            public Color? BgColor { get; set; }
+            public bool? Bold { get; set; }
+            public string Format { get; set; }
+            public bool? Merge { get; set; }
+            public float? FontSize { get; set; }
+            public int? Indent { get; set; }
+            public bool? Wrap { get; set; }
+            public HAlign? HAlign { get; set; }
+            public bool? Top { get; set; }
+            public double? Width { get; set; }
+        };
 
         public const string FMT_CUR = "_($* #,##0_);_($* (#,##0);_($* \"-\"??_);_(@_)";
+        public const string FMT_CUR2 = "_($* #,##0.00_);_($* (#,##0.00);_(* \"-\"??_);_(@_)";
+        public const string FMT_DATE = "m/d/yyyy";
+        public const string FMT_PERC = "0%";
 
-        public IStyle AddStyle(string name)
+        public static Excel Create<T>(IEnumerable<T> items)
         {
-            return _workbook.Styles.Add(name);
-        }
+            var excel = new Excel();
+            var props = typeof(T).GetProperties().Where(x => x.PropertyType.IsSimpleType()).ToList();
 
-        public void SetBorders(IRange cells, ExcelLineStyle style, ExcelKnownColors color, params ExcelBordersIndex[] borders)
-        {
-            if (cells == null) return;
-            foreach (var b in borders)
+            foreach (var prop in props)
             {
-                cells.CellStyle.Borders[b].LineStyle = style;
-                cells.CellStyle.Borders[b].Color = color;
+                excel.NextCol(prop.Name);
             }
-        }
+            excel.NextRow();
 
-        public Stream AsStream()
-        {
-            var stream = new MemoryStream();
-            _workbook.SaveAs(stream);
-            stream.Position = 0;
-            return stream;
-        }
-
-        public string GetValue(int row, int col)
-        {
-            return GetValue<string>(row, col);
-        }
-
-        public T GetValue<T>(int row, int col)
-        {
-            var type = typeof(T);
-            var cell = _sheet[row, col];
-
-            if (type == typeof(string))
+            foreach (var item in items)
             {
-                return (T)(object)cell.Value;
-            }
-            else if ((type == typeof(DateTime) || type == typeof(DateTime?)) && cell.HasDateTime)
-            {
-                return (T)(object)cell.DateTime;
-            }
-            else if ((type == typeof(decimal) || type == typeof(decimal?)) && cell.HasNumber)
-            {
-                return (T)(object)Convert.ToDecimal(cell.Number);
-            }
-
-            return cell.Value.To<T>();
-        }
-
-        public string GetDisplay(int row, int col)
-        {
-            return _sheet[row, col].DisplayText;
-        }
-
-        public static Stream Create<T>(IEnumerable<T> items, params string[] properties)
-        {
-            if (properties == null || properties.Length == 0)
-            {
-                properties = typeof(T).GetProperties().Select(x => x.Name).ToArray();
-            }
-
-            using (var excel = new ExcelEngine())
-            {
-                var workbook = excel.Excel.Workbooks.Create(1);
-                var sheet = workbook.Worksheets[0];
-
-                //write out header
-                var row = 1;
-                var col = 1;
-                foreach (var p in properties)
+                foreach (var prop in props)
                 {
-                    sheet[row, col++].Value2 = p;
+                    excel.NextCol(item.Get(prop));
                 }
-
-                //write out each item
-                row++;
-                foreach (var item in items)
-                {
-                    col = 1;
-                    foreach (var p in properties)
-                    {
-                        sheet[row, col++].Value2 = item.Get(p);
-                    }
-                    row++;
-                }
-
-                var stream = new MemoryStream();
-                workbook.SaveAs(stream);
-                return stream;
+                excel.NextRow();
             }
 
+            excel.AutoFitColumns();
+            return excel;
         }
 
-        public static Stream Create<T>(IEnumerable<T> items, Action<IWorksheet, int, T> load)
+        public List<T> GetRow<T>(int row, int startCol = 1)
         {
-            using (var excel = new ExcelEngine())
-            {
-                var workbook = excel.Excel.Workbooks.Create(1);
-                var sheet = workbook.Worksheets[0];
-                var row = 1;
-
-                foreach (var item in items)
-                {
-                    load(sheet, row, item);
-                    row++;
-                }
-
-                var stream = new MemoryStream();
-                workbook.SaveAs(stream);
-                return stream;
-            }
+            return _worksheet
+                .Cells[row, startCol, row, Cols]
+                .Select(x => x.Text.To<T>())
+                .ToList();
         }
 
-        public List<T> ToList<T>() where T : new()
+        public Dictionary<string, int> GetHeaders()
         {
-            var props = new List<PropertyInfo>();
-            foreach (var col in 1.upto(Columns))
-            {
-                var prop = typeof(T).GetProperty(this[1, col].Or());
-                props.Add(prop);
-            }
+            return 1.UpTo(Cols)
+                .Select(x => Ext.KeyValuePair(Get<string>(1, x), x))
+                .Where(x => x.Key != null)
+                .ToDictionary(x => x.Key.Replace(" ", ""), x => x.Value);
+        }
 
+        public List<T> GetList<T>() where T : new()
+        {
             var list = new List<T>();
-            foreach (var r in 2.upto(Rows))
+            var headers = 1.UpTo(Cols).ToDict(x => Get<string>(1, x).Or(), x => x);
+            var properties = typeof(T).GetProperties().Where(x => headers.ContainsKey(x.Name)).ToDictionary(x => x.Name);
+            foreach (var row in 2.UpTo(Rows))
             {
                 var item = new T();
-                foreach (var c in 0.upto(props.Count - 1))
+                foreach (var header in headers)
                 {
-                    if (props[c] != null) item.Set(props[c], this[r, c + 1]);
+                    var prop = properties.Get(header.Key);
+                    if (prop == null)
+                        continue;
+
+                    item.Set(prop, Get(prop.PropertyType, row, header.Value));
                 }
                 list.Add(item);
             }
-
             return list;
         }
+
+        public static List<T> Load<T>(string path) where T : new()
+        {
+            using (var stream = File.OpenRead(path))
+            {
+                using (var excel = new Excel(stream))
+                {
+                    return excel.GetList<T>();
+                }
+            }
+        }
+
+        public enum HAlign
+        {
+            Left, Center, Right
+        }
+
+        public bool IsRowEmpty(int row)
+        {
+            var values = (object[,])_worksheet.Cells[row, 1, row, Cols].Value;
+            return !values.Cast<object>().Any(x => x.Or().HasValue());
+        }
     };
-
-    public static class ExtSyncfusion
-    {
-
-        public static void AddRow(this IWorksheet sheet, params object[] values)
-        {
-            var row = sheet.Rows.Length + 1;
-            var col = 1;
-            foreach (var value in values)
-            {
-                if (value == null)
-                {
-                }
-                else if (Ext.IsNumeric(value))
-                {
-                    sheet[row, col].Value2 = value;
-                }
-                else
-                {
-                    sheet[row, col].Text = value.ToString();
-                }
-                col++;
-            }
-        }
-
-        public static void AutofitColumns(this IWorksheet sheet)
-        {
-            foreach (var c in 1.upto(sheet.Columns.Length))
-            {
-                sheet.AutofitColumn(c);
-            }
-        }
-
-        public static void AddToRow(this IWorksheet sheet, params object[] values)
-        {
-            var row = sheet.Rows.Length;
-            var col = sheet.Rows[row - 1].LastColumn;
-            foreach (var value in values)
-            {
-                sheet[row, col++].Value2 = value;
-            }
-        }
-
-    };
-
 }
