@@ -3,9 +3,11 @@
     var value = Model.Or();
     var type = (string)ViewData.ModelMetadata.AdditionalValues["CodeType"];
     var attrs = (IDictionary<string, object>)ViewData["htmlAttributes"];
+    var activeOnly = Request.IsAuthenticated ? (bool?)null : true;
+
     var list = Ioc
         .Get<Codes>()
-        .Query(type)
+        .Query(type, activeOnly)
         .Select(x => new SelectListItem
         {
             Value = x.Value,
