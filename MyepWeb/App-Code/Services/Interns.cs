@@ -9,36 +9,59 @@ namespace Site
 {
     public class Interns
     {
-        private readonly SiteDb _db;
+        private readonly IDb _db;
 
-        public Interns(SiteDb db)
+        public Interns(IDb db)
         {
             _db = db;
         }
 
         public List<InternInfo> Query(bool? inactive = false)
         {
-            var sql = "SELECT Id AS InternId, FirstName+' '+LastName AS FullName FROM Interns";
-            if (inactive != true) sql += " WHERE Inactive=0 ";
-            return _db.Query<InternInfo>(sql).ToList();
+            var query = _db.Query<Intern>();
+
+            if (inactive != true)
+            {
+                query = query.Where(x => x.Inactive == false);
+            }
+
+            return query
+                .Select(x => new InternInfo
+                {
+                    InternId = x.Id,
+                    FullName = x.FirstName + " " + x.LastName,
+                })
+                .ToList();
         }
 
         public Intern Load(int? id)
         {
-            if (!id.HasValue) return null;
-            return _db.SingleOrDefault<Intern>("SELECT * FROM Interns WHERE Id=@0", id);
+            if (!id.HasValue)
+                return null;
+
+            return _db
+                .Query<Intern>()
+                .SingleOrDefault(x => x.Id == id);
         }
 
         public Intern LoadByCode(string code)
         {
-            if (!code.HasValue()) return null;
-            return _db.SingleOrDefault<Intern>("SELECT * FROM Interns WHERE CmsStudentId=@0 OR AccessCode=@0", code);
+            if (!code.HasValue())
+                return null;
+
+            return _db
+                .Query<Intern>()
+                .SingleOrDefault(x => x.CmsStudentId == code || x.AccessCode == code);
         }
 
         public Intern LoadByCmsId(string id)
         {
-            if (!id.HasValue()) return null;
-            return _db.SingleOrDefault<Intern>("SELECT * FROM Interns WHERE CmsStudentId=@0", id);
+            if (!id.HasValue())
+                return null;
+
+            return _db
+                .Query<Intern>()
+                .SingleOrDefault(x => x.CmsStudentId == id);
         }
 
         public Intern Create(string cmsStudentId)
@@ -80,7 +103,8 @@ namespace Site
             if (model.RaceOther.HasValue() && !model.Race.Or().Contains("Other"))
                 model.Race = string.Join(",", model.Race.Or().Split(',').Union(new[] { "Other" }).Distinct());
 
-            _db.Save("Interns", "Id", model);
+            _db.Save(model, model.Id == 0);
+            _db.SaveChanges();
         }
 
         public void UploadEssay(Intern model, HttpPostedFileBase file)
@@ -171,7 +195,7 @@ namespace Site
 
         public Stream Export()
         {
-            var interns = _db.Query<Intern>("SELECT * FROM Interns");
+            var interns = _db.Query<Intern>().ToList();
             using (var excel = Excel.Create(interns))
             {
                 return excel.GetStream();

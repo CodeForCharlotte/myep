@@ -5,28 +5,44 @@ namespace Site
 {
     public class Codes
     {
-        private readonly SiteDb _db;
+        private readonly IDb _db;
 
-        public Codes(SiteDb db)
+        public Codes(IDb db)
         {
             _db = db;
         }
 
         public List<string> GetTypes()
         {
-            return _db.Query<string>("SELECT DISTINCT [Type] FROM [Codes] ORDER BY [Type]").ToList();
+            return _db
+                .Query<Code>()
+                .Select(x => x.Type)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
         }
 
         public List<Code> Query(string type, bool? active = null)
         {
-            var sql = "SELECT * FROM [Codes] WHERE [Type]=@0";
-            if (active == true) sql += " AND Seq>=0 ";
-            return _db.Query<Code>(sql + " ORDER BY [Seq],[Value]", type).ToList();
+            var query = _db
+                .Query<Code>()
+                .Where(x => x.Type == type);
+
+            if (active == true)
+            {
+                query = query.Where(x => x.Seq >= 0);
+            }
+
+            return query
+                .OrderBy(x => x.Seq)
+                .ThenBy(x => x.Value)
+                .ToList();
         }
 
         public void Save(Code model)
         {
-            _db.Save("Codes", "Id", model);
+            _db.Save(model, model.Id == 0);
+            _db.SaveChanges();
         }
     };
 }

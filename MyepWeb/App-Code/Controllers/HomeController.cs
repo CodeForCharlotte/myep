@@ -5,13 +5,11 @@ namespace Site
 {
     public class HomeController : Controller
     {
-        private readonly SiteDb _db;
         private readonly Interns _interns;
         private readonly Users _users;
 
-        public HomeController(SiteDb db, Interns interns, Users users)
+        public HomeController(Interns interns, Users users)
         {
-            _db = db;
             _interns = interns;
             _users = users;
         }

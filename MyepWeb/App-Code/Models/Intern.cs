@@ -5,13 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Site
 {
     [Table("Interns")]
-    public class Intern : IEntity
+    public class Intern
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         [StringLength(10)]
-        [Index("IX_Intern_AccessCode", unique: true)]
+        [Index("IX_Intern_AccessCode", IsUnique = true)]
         public string AccessCode { get; set; }
 
         [StringLength(10)]
@@ -79,6 +79,7 @@ namespace Site
 
         public bool HasSummerSchool { get; set; }
 
+        [StringLength(50)]
         public string InternshipAvailability { get; set; }
 
         public bool ConvictedOfCrime { get; set; }
