@@ -178,6 +178,7 @@ namespace Site
         [StringLength(1500)]
         public string BriefEssay { get; set; }
 
+        [Select]
         [StringLength(1500)]
         public string CareerInterests { get; set; }
 
@@ -216,10 +217,10 @@ namespace Site
         [StringLength(25)]
         public string TrainingCompleted { get; set; }
 
+        [Select]
         [StringLength(100)]
         public string CareerInterest { get; set; }
 
-        [Select]
         [StringLength(50)]
         public string Placement { get; set; }
 
