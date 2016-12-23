@@ -16,6 +16,8 @@ You can find out more about Unity.Mvc3 by visiting:
 
 http://devtrends.co.uk/blog/introducing-the-unity.mvc3-nuget-package-to-reconcile-mvc3-unity-and-idisposable
 */
+
+using System.Configuration;
 using System.Web.Mvc;
 using System.Web.Routing;
 using Microsoft.Practices.Unity;
@@ -25,6 +27,8 @@ namespace Site
 {
     public static class Bootstrapper
     {
+        public static readonly string ConnectionString = ConfigurationManager.ConnectionStrings["SiteDb"].ConnectionString;
+
         public static void Initialize()
         {
             ConfigureContainer(new UnityContainer());
@@ -36,7 +40,7 @@ namespace Site
 
         public static void ConfigureContainer(IUnityContainer container)
         {
-            container.RegisterType<SiteDb>(new HierarchicalLifetimeManager());
+            container.RegisterType(typeof(IDb), typeof(SiteDb), new HierarchicalLifetimeManager(), new InjectionFactory(x => new SiteDb(ConnectionString)));
 
             DependencyResolver.SetResolver(new UnityDependencyResolver(container));
         }

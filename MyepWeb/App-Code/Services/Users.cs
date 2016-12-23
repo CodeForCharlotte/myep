@@ -8,35 +8,49 @@ namespace Site
 {
     public class Users
     {
-        private readonly SiteDb _db;
+        private readonly IDb _db;
 
-        public Users(SiteDb db)
+        public Users(IDb db)
         {
             _db = db;
         }
 
         public List<User> Query()
         {
-            return _db.Query<User>("SELECT * FROM [Users]")
-                      .ToList();
+            return _db
+                .Query<User>()
+                .OrderBy(x => x.Email)
+                .ToList();
         }
 
         public User Load(int? id)
         {
-            if (!id.HasValue) return null;
-            return _db.SingleOrDefault<User>("SELECT * FROM [Users] WHERE Id=@0", id);
+            if (!id.HasValue)
+                return null;
+
+            return _db
+                .Query<User>()
+                .SingleOrDefault(x => x.Id == id);
         }
 
         public User Load(string email)
         {
-            if (string.IsNullOrWhiteSpace(email)) return null;
-            return _db.SingleOrDefault<User>("SELECT * FROM [Users] WHERE [Email]=@0", email);
+            if (string.IsNullOrWhiteSpace(email))
+                return null;
+
+            return _db
+                .Query<User>()
+                .SingleOrDefault(x => x.Email == email);
         }
 
         public User LoadByCode(string resetCode)
         {
-            if (string.IsNullOrWhiteSpace(resetCode)) return null;
-            return _db.SingleOrDefault<User>("SELECT * FROM [Users] WHERE [ResetCode]=@0", resetCode);
+            if (string.IsNullOrWhiteSpace(resetCode))
+                return null;
+
+            return _db
+                .Query<User>()
+                .SingleOrDefault(x => x.ResetCode == resetCode);
         }
 
         public User Create()
@@ -49,7 +63,8 @@ namespace Site
 
         public void Save(User model)
         {
-            _db.Save("Users", "Id", model);
+            _db.Save(model, model.Id == 0);
+            _db.SaveChanges();
         }
 
         public bool Login(string email, string password, bool remember)
